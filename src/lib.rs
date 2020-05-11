@@ -3,8 +3,8 @@ mod web;
 
 use std::fmt::{Display, Error as FmtError, Formatter};
 
-/// Wraps a Rust error type with a user-facing description. This stops users from seeing your internal errors,
-/// which might expose sensitive implementation details that should be kept private.
+/// Wraps a Rust error type with a user-facing description. This stops users from seeing your internal
+/// errors, which might contain sensitive implementation details that should be kept private.
 pub struct Error<External: Display> {
     /// The underlying error, from some function. May contain sensitive information, so it should
     /// not be shown to users.
@@ -13,7 +13,8 @@ pub struct Error<External: Display> {
     pub external: External,
 }
 
-/// Displaying a twoface::Error will only display the external section. The internal error remains private.
+/// Displaying a twoface::Error will only display the external section. The internal error remains
+/// private.
 impl<External: Display> Display for Error<External> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
         write!(f, "{}", self.external)
