@@ -3,7 +3,7 @@
 //! kept private.
 //!
 //! # Example
-
+//!
 //! ```rust
 //! use twoface::{AnyhowExt, Error};
 //!
@@ -23,10 +23,11 @@
 //!         }
 //!     }
 //! }
-// ```
+//! ```
+//!
 
 #[cfg(feature = "actix_web")]
-mod web;
+pub mod web;
 
 use std::fmt::{Display, Error as FmtError, Formatter};
 

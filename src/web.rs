@@ -1,3 +1,30 @@
+//! ## Actix-web integration
+//! By enabling the feature `actix_web`, Twoface errors can be easily converted into HTTP responses.
+//!
+//!
+//!```rust
+//! use twoface::AnyhowExt;
+//! use twoface::web::{ResultExt, HttpError};
+//! use actix_web::{Responder, web, http::StatusCode};
+//!
+//! fn query_db_for_username(user_id: u32) -> anyhow::Result<String> {
+//!     use anyhow::anyhow;
+//!     Err(anyhow!("pq: could not query relation 'users': auth error"))
+//! }
+//!
+//! fn get_username(user_id: web::Path<u32>) -> impl Responder {
+//!     let username = query_db_for_username(*user_id);
+//!     username
+//!         .map_err(|e| {
+//!             e.describe(HttpError {
+//!                 code: StatusCode::INTERNAL_SERVER_ERROR,
+//!                 text: "Database was unavailable",
+//!             })
+//!         })
+//!         .json_response()
+//! }
+//!```
+
 use crate::Error;
 use actix_web::{
     http::{header, StatusCode},
@@ -18,7 +45,7 @@ pub struct HttpError {
 
 impl Display for HttpError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
-        write!(f, "{}", self.code, self.text)
+        write!(f, "{}", self.text)
     }
 }
 
