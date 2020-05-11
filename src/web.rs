@@ -10,6 +10,7 @@ pub trait ResultExt {
     fn json_response(self) -> HttpResponse;
 }
 
+/// Used to create HTTP responses with the given text and status code.
 pub struct HttpError {
     pub code: StatusCode,
     pub text: &'static str,
@@ -17,7 +18,7 @@ pub struct HttpError {
 
 impl Display for HttpError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
-        write!(f, "HTTP {}: {}", self.code, self.text)
+        write!(f, "{}", self.code, self.text)
     }
 }
 
@@ -25,6 +26,8 @@ impl<T> ResultExt for Result<T, Error<HttpError>>
 where
     T: Serialize,
 {
+    /// Ok becomes HTTP 200 and the value is serialized into JSON for the body.
+    /// Err becomes whatever HTTP error was chosen, with the user-facing description set as the JSON body.
     fn json_response(self) -> HttpResponse {
         match self.map(|s| serde_json::to_string(&s)) {
             // Result OK
@@ -77,7 +80,7 @@ mod tests {
 
         assert_eq!(StatusCode::NOT_FOUND, resp.status());
 
-        let expected_body = "{\"error\": \"HTTP 404 Not Found: page not found\"}";
+        let expected_body = "{\"error\": \"page not found\"}";
         if let Some(actix_web::body::Body::Bytes(bytes)) = resp.body().as_ref() {
             let actual_body = String::from_utf8(bytes.to_vec()).unwrap();
             assert_eq!(actual_body, expected_body);
