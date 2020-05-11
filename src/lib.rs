@@ -5,20 +5,23 @@
 //! # Example
 //!
 //! ```rust
-//! use twoface::{AnyhowExt, Error};
+//! use twoface::{ResultExt, Error};
 //!
 //! fn read_private_file() -> Result<String, Error<&'static str>> {
 //!     // Do not leak this path to users!
 //!     let secret_path = "/secrets/user01/profile.txt";
-//!     std::fs::read_to_string(secret_path).map_err(|e|e.describe("Could not get profile"))
+//!     // Use `describe_err` to add a user-facing error.
+//!     std::fs::read_to_string(secret_path).describe_err("Could not get profile")
 //! }
 //!
-//! /// Show the user their profile (or a user-friendly error message).
+//! /// Returns the user's profile (or a user-friendly error message).
 //! fn get_user_response() -> String {
 //!     match read_private_file() {
 //!         Ok(s) => format!("Your profile: {}", s),
 //!         Err(e) => {
-//!             eprintln!("ERROR: {}", e);
+//!             // Log the internal error
+//!             eprintln!("ERROR: {:?}", e.internal);
+//!             // Return the external error to users.
 //!             e.to_string()
 //!         }
 //!     }
@@ -27,12 +30,14 @@
 //!
 
 #[cfg(feature = "actix_web")]
+#[cfg_attr(docsrs, doc(cfg(feature = "macros")))]
 pub mod web;
 
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 /// Wraps a Rust error type with a user-facing description. This stops users from seeing your internal
 /// errors, which might contain sensitive implementation details that should be kept private.
+#[derive(Debug)]
 pub struct Error<External: Display> {
     /// The underlying error, from some function. May contain sensitive information, so it should
     /// not be shown to users.
@@ -40,8 +45,6 @@ pub struct Error<External: Display> {
     /// A user-friendly error that doesn't contain any sensitive information.
     pub external: External,
 }
-
-pub type Result<T, External> = std::result::Result<T, Error<External>>;
 
 /// Displaying a twoface::Error will only display the external section. The internal error remains
 /// private.
@@ -63,6 +66,19 @@ impl<Internal: Into<anyhow::Error>> AnyhowExt for Internal {
             internal: self.into(),
             external,
         }
+    }
+}
+
+pub trait ResultExt<T> {
+    fn describe_err<External: Display>(self, external: External) -> Result<T, Error<External>>;
+}
+
+impl<T, E> ResultExt<T> for Result<T, E>
+where
+    E: Into<anyhow::Error>,
+{
+    fn describe_err<External: Display>(self, external: External) -> Result<T, Error<External>> {
+        self.map_err(|e| e.describe(external))
     }
 }
 
