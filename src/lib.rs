@@ -3,13 +3,13 @@ mod web;
 
 use std::fmt::{Display, Error as FmtError, Formatter};
 
-pub struct Error<Data: Display> {
+pub struct Error<External: Display> {
     pub internal: anyhow::Error,
-    pub external: Data,
+    pub external: External,
 }
 
-impl<Data: Display> Error<Data> {
-    pub fn describe<E: Into<anyhow::Error>>(e: E, external: Data) -> Self {
+impl<External: Display> Error<External> {
+    pub fn describe<E: Into<anyhow::Error>>(e: E, external: External) -> Self {
         Self {
             internal: e.into(),
             external,
@@ -17,7 +17,7 @@ impl<Data: Display> Error<Data> {
     }
 }
 
-impl<Data: Display> Display for Error<Data> {
+impl<External: Display> Display for Error<External> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
         write!(f, "{}", self.external)
     }

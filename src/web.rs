@@ -18,7 +18,7 @@ pub struct HttpError {
 
 impl Display for HttpError {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
-        self.text.fmt(f)
+        write!(f, "HTTP {}: {}", self.code, self.text)
     }
 }
 
