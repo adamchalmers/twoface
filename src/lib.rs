@@ -1,14 +1,15 @@
+#[cfg(feature = "actix_web")]
 mod web;
-type Text = &'static str;
+
 use std::fmt;
 
 pub struct Error<Data> {
     pub internal: anyhow::Error,
-    pub external: (Data, Text),
+    pub external: (Data, &'static str),
 }
 
 impl<Data> Error<Data> {
-    pub fn describe<E: Into<anyhow::Error>>(e: E, data: Data, user_msg: Text) -> Self {
+    pub fn describe<E: Into<anyhow::Error>>(e: E, data: Data, user_msg: &'static str) -> Self {
         Self {
             internal: e.into(),
             external: (data, user_msg),
