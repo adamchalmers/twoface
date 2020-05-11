@@ -25,9 +25,9 @@ where
                 .header(header::CONTENT_TYPE, "application/json")
                 .body(format!("{}", e)),
             // Result err
-            Err(err) => HttpResponse::build(err.external.0)
+            Err(err) => HttpResponse::build(err.user_data)
                 .header(header::CONTENT_TYPE, "application/json")
-                .body(to_json_err(err.external.1)),
+                .body(to_json_err(err.user_text)),
         }
     }
 }

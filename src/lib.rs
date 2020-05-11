@@ -5,21 +5,27 @@ use std::fmt;
 
 pub struct Error<Data> {
     pub internal: anyhow::Error,
-    pub external: (Data, &'static str),
+    pub user_data: Data,
+    pub user_text: &'static str,
 }
 
 impl<Data> Error<Data> {
-    pub fn describe<E: Into<anyhow::Error>>(e: E, data: Data, user_msg: &'static str) -> Self {
+    pub fn describe<E: Into<anyhow::Error>>(
+        e: E,
+        user_data: Data,
+        user_text: &'static str,
+    ) -> Self {
         Self {
             internal: e.into(),
-            external: (data, user_msg),
+            user_data,
+            user_text,
         }
     }
 }
 
 impl<Data> fmt::Display for Error<Data> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), fmt::Error> {
-        write!(f, "{}", self.external.1)
+        write!(f, "{}", self.user_text)
     }
 }
 
