@@ -1,3 +1,30 @@
+//! `twoface::Error` wraps a Rust error type with a user-facing description. This stops users from
+//! seeing your internal errors, which might contain sensitive implementation details that should be
+//! kept private.
+//!
+//! # Example
+
+//! ```rust
+//! use twoface::{AnyhowExt, Error};
+//!
+//! fn read_private_file() -> Result<String, Error<&'static str>> {
+//!     // Do not leak this path to users!
+//!     let secret_path = "/secrets/user01/profile.txt";
+//!     std::fs::read_to_string(secret_path).map_err(|e|e.describe("Could not get profile"))
+//! }
+//!
+//! /// Show the user their profile (or a user-friendly error message).
+//! fn get_user_response() -> String {
+//!     match read_private_file() {
+//!         Ok(s) => format!("Your profile: {}", s),
+//!         Err(e) => {
+//!             eprintln!("ERROR: {}", e);
+//!             e.to_string()
+//!         }
+//!     }
+//! }
+// ```
+
 #[cfg(feature = "actix_web")]
 mod web;
 
@@ -13,16 +40,18 @@ pub struct Error<External: Display> {
     pub external: External,
 }
 
+pub type Result<T, External> = std::result::Result<T, Error<External>>;
+
 /// Displaying a twoface::Error will only display the external section. The internal error remains
 /// private.
 impl<External: Display> Display for Error<External> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::result::Result<(), FmtError> {
         write!(f, "{}", self.external)
     }
 }
 
 /// Easily turn an error into a twoface::Error by describing it to your users.
-trait AnyhowExt {
+pub trait AnyhowExt {
     /// Adds a user-facing description to an internal error.
     fn describe<External: Display>(self, external: External) -> Error<External>;
 }
