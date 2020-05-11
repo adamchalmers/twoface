@@ -4,7 +4,6 @@ use actix_web::{
     HttpResponse,
 };
 use serde::Serialize;
-use serde_json;
 use std::fmt::{Display, Error as FmtError, Formatter};
 
 pub trait ResultExt {
@@ -55,11 +54,35 @@ fn to_json_err(s: &str) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::AnyhowExt;
 
     #[test]
     fn test_to_json_err() {
         let actual = to_json_err("page not found");
         let expected = "{\"error\": \"page not found\"}";
         assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn test_http_response() {
+        let file = std::fs::read("secret-filename-do-not-leak-to-user");
+        let resp = file
+            .map_err(|e| {
+                e.describe(HttpError {
+                    code: StatusCode::NOT_FOUND,
+                    text: "page not found",
+                })
+            })
+            .json_response();
+
+        assert_eq!(StatusCode::NOT_FOUND, resp.status());
+
+        let expected_body = "{\"error\": \"HTTP 404 Not Found: page not found\"}";
+        if let Some(actix_web::body::Body::Bytes(bytes)) = resp.body().as_ref() {
+            let actual_body = String::from_utf8(bytes.to_vec()).unwrap();
+            assert_eq!(actual_body, expected_body);
+        } else {
+            panic!("wrong response type");
+        }
     }
 }

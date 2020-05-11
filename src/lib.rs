@@ -8,10 +8,14 @@ pub struct Error<External: Display> {
     pub external: External,
 }
 
-impl<External: Display> Error<External> {
-    pub fn describe<E: Into<anyhow::Error>>(e: E, external: External) -> Self {
-        Self {
-            internal: e.into(),
+trait AnyhowExt {
+    fn describe<External: Display>(self, external: External) -> Error<External>;
+}
+
+impl<Internal: Into<anyhow::Error>> AnyhowExt for Internal {
+    fn describe<External: Display>(self, external: External) -> Error<External> {
+        Error {
+            internal: self.into(),
             external,
         }
     }
@@ -20,5 +24,17 @@ impl<External: Display> Error<External> {
 impl<External: Display> Display for Error<External> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), FmtError> {
         write!(f, "{}", self.external)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_only_external_part_is_shown() {
+        let io_err = std::fs::read("secret-filename-do-not-leak-to-user").unwrap_err();
+        let err = io_err.describe("An IO error occurred");
+        assert_eq!(err.to_string(), "An IO error occurred");
     }
 }
