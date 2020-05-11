@@ -10,7 +10,7 @@
 //! fn read_private_file() -> Result<String, Error<&'static str>> {
 //!     // Do not leak this path to users!
 //!     let secret_path = "/secrets/user01/profile.txt";
-//!     // Use `describe_err` to add a user-facing error.
+//!     // Use `describe_err` to wrap the result's Err value into a twoface::Error.
 //!     std::fs::read_to_string(secret_path).describe_err("Could not get profile")
 //! }
 //!
